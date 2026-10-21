@@ -1,0 +1,159 @@
+CREATE TABLE regions (region_id INT CONSTRAINT regions_pk PRIMARY KEY, region_name  VARCHAR2(25));
+CREATE TABLE countries (country_id INT CONSTRAINT countries_pk PRIMARY KEY, country_name  VARCHAR2(60));
+ALTER TABLE countries ADD region_id NUMBER(4);
+ALTER TABLE countries ADD CONSTRAINT countries_regions_fk
+    FOREIGN KEY (region_id) REFERENCES regions (region_id);
+
+CREATE TABLE locations (
+    location_id     NUMBER(4)    CONSTRAINT locations_pk PRIMARY KEY,
+    street_address  VARCHAR2(40),
+    postal_code     VARCHAR2(12),
+    city            VARCHAR2(30) NOT NULL,
+    state_province  VARCHAR2(25)
+);
+ALTER TABLE locations ADD country_id CHAR(2);
+ALTER TABLE locations ADD CONSTRAINT locations_countries_fk
+    FOREIGN KEY (country_id) REFERENCES countries (country_id);
+
+CREATE TABLE jobs (
+    job_id     VARCHAR2(10) CONSTRAINT jobs_pk PRIMARY KEY,
+    job_title  VARCHAR2(35) NOT NULL
+);
+
+LTER TABLE jobs ADD (min_salary NUMBER(6), max_salary NUMBER(6));
+-- warunek: min_salary mniejsze od max_salary co najmniej o 2000
+ALTER TABLE jobs ADD CONSTRAINT jobs_salary_chk
+    CHECK (max_salary - min_salary >= 2000);
+
+
+CREATE TABLE departments (
+    department_id    NUMBER(4)    CONSTRAINT departments_pk PRIMARY KEY,
+    department_name  VARCHAR2(30) NOT NULL,
+    manager_id       NUMBER(6),
+    location_id      NUMBER(4)
+);
+
+
+
+CREATE TABLE employees (
+    employee_id     NUMBER(6)    CONSTRAINT employees_pk PRIMARY KEY,
+    first_name      VARCHAR2(20),
+    last_name       VARCHAR2(25) NOT NULL,
+    email           VARCHAR2(25) NOT NULL CONSTRAINT employees_email_uk UNIQUE,
+    phone_number    VARCHAR2(20),
+    hire_date       DATE         NOT NULL,
+    job_id          VARCHAR2(10) NOT NULL,
+    salary          NUMBER(8,2),
+    commission_pct  NUMBER(2,2)
+);
+ALTER TABLE employees ADD (manager_id NUMBER(6), department_id NUMBER(4));
+
+
+CREATE TABLE job_history (
+    employee_id    NUMBER(6)    NOT NULL,
+    start_date     DATE         NOT NULL,
+    end_date       DATE         NOT NULL,
+    job_id         VARCHAR2(10) NOT NULL,
+    department_id  NUMBER(4),
+    CONSTRAINT job_history_pk  PRIMARY KEY (employee_id, start_date),
+    CONSTRAINT job_history_dates_chk CHECK (end_date > start_date)
+);
+
+
+
+ALTER TABLE departments ADD CONSTRAINT dept_loc_fk
+    FOREIGN KEY (location_id) REFERENCES locations (location_id);
+ALTER TABLE departments ADD CONSTRAINT dept_mgr_fk
+    FOREIGN KEY (manager_id) REFERENCES employees (employee_id);
+ 
+ALTER TABLE employees ADD CONSTRAINT emp_job_fk
+    FOREIGN KEY (job_id) REFERENCES jobs (job_id);
+ALTER TABLE employees ADD CONSTRAINT emp_dept_fk
+    FOREIGN KEY (department_id) REFERENCES departments (department_id);
+ALTER TABLE employees ADD CONSTRAINT emp_manager_fk
+    FOREIGN KEY (manager_id) REFERENCES employees (employee_id);
+ 
+ALTER TABLE job_history ADD CONSTRAINT jhist_emp_fk
+    FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
+ALTER TABLE job_history ADD CONSTRAINT jhist_job_fk
+    FOREIGN KEY (job_id) REFERENCES jobs (job_id);
+ALTER TABLE job_history ADD CONSTRAINT jhist_dept_fk
+    FOREIGN KEY (department_id) REFERENCES departments (department_id);
+
+INSERT INTO jobs VALUES ('IT_PROG',    'Programmer',           4000, 10000);
+INSERT INTO jobs VALUES ('SA_REP',     'Sales Representative', 6000,  9000);
+INSERT INTO jobs VALUES ('AC_ACCOUNT', 'Public Accountant',    4200,  8000);
+INSERT INTO jobs VALUES ('ST_CLERK',   'Stock Clerk',          2000,  5000);
+
+
+INSERT INTO employees (employee_id, first_name, last_name, email, phone_number,
+                       hire_date, job_id, salary, commission_pct, manager_id, department_id)
+VALUES (1, 'Anna',  'Kowalska', 'AKOWALSKA', '515.123.4567', DATE '2018-03-01', 'AC_ACCOUNT', 8000, NULL, NULL, NULL);
+INSERT INTO employees (employee_id, first_name, last_name, email, phone_number,
+                       hire_date, job_id, salary, commission_pct, manager_id, department_id)
+VALUES (4, 'Piotr', 'Zielinski', 'PZIELINSKI', '515.123.4570', DATE '2020-09-15', 'ST_CLERK', 3500, NULL, 1, NULL);
+INSERT INTO employees (employee_id, first_name, last_name, email, phone_number,
+                       hire_date, job_id, salary, commission_pct, manager_id, department_id)
+VALUES (2, 'Jan',   'Nowak',    'JNOWAK',    '515.123.4568', DATE '2019-06-12', 'ST_CLERK', 3000, NULL, 4, NULL);
+INSERT INTO employees (employee_id, first_name, last_name, email, phone_number,
+                       hire_date, job_id, salary, commission_pct, manager_id, department_id)
+VALUES (3, 'Ewa',   'Wisniewska','EWISNIEWSKA','515.123.4569', DATE '2021-01-20', 'ST_CLERK', 3200, NULL, 4, NULL);
+COMMIT;
+
+UPDATE employees
+   SET manager_id = 1
+ WHERE employee_id IN (2, 3);
+COMMIT;
+
+
+UPDATE jobs
+   SET min_salary = min_salary + 500,
+       max_salary = max_salary + 500
+ WHERE LOWER(job_title) LIKE '%b%'
+    OR LOWER(job_title) LIKE '%s%';
+COMMIT;
+
+
+SELECT * FROM jobs;
+
+//odpowiedź:
+JOB_ID     JOB_TITLE                           MIN_SALARY MAX_SALARY
+---------- ----------------------------------- ---------- ----------
+IT_PROG    Programmer                                4000      10000
+SA_REP     Sales Representative                      6500       9500
+AC_ACCOUNT Public Accountant                         4700       8500
+ST_CLERK   Stock Clerk                               2500       5500
+
+
+DELETE FROM jobs WHERE max_salary > 9000;
+COMMIT;
+
+
+SELECT * FROM jobs;
+
+//odpowiedź:
+JOB_ID     JOB_TITLE                           MIN_SALARY MAX_SALARY
+---------- ----------------------------------- ---------- ----------
+AC_ACCOUNT Public Accountant                         4700       8500
+ST_CLERK   Stock Clerk                               2500       5500
+
+
+
+DROP TABLE job_history; 
+
+SELECT object_name, original_name, droptime
+  FROM user_recyclebin;
+
+//odpowiedź:
+OBJECT_NAME                                        ORIGINAL_NAME                                        DROPTIME                                                               
+-----------------------------------------------------------------------------------------------------------------
+BIN$DSonjNjSTzCaVRnFQw0//A==$0                     COUNTIRES_PK                               2026-10-18:16:21:44                                                                                                                                                             
+BIN$UchzxpGURry6VuEeoU49vQ==$0                     REGIONS                                    2026-10-18:16:21:44                                                                                                                                                                    
+BIN$ProWJE94S3mMa0ckO5+YiQ==$0                     JOB_HISTORY_PK                             2026-10-18:16:33:26                                                                                                                                                                    
+BIN$4TCXlQLASnqe6bZGp6ulNA==$0                     JOB_HISTORY                                2026-10-18:16:33:26
+
+
+FLASHBACK TABLE job_history TO BEFORE DROP;
+
+SELECT * FROM job_history;
+
