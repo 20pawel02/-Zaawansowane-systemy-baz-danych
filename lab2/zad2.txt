@@ -1,0 +1,321 @@
+DROP TABLE job_history  CASCADE CONSTRAINTS PURGE;
+DROP TABLE employees    CASCADE CONSTRAINTS PURGE;
+DROP TABLE departments  CASCADE CONSTRAINTS PURGE;
+DROP TABLE locations    CASCADE CONSTRAINTS PURGE;
+DROP TABLE countries    CASCADE CONSTRAINTS PURGE;
+DROP TABLE regions      CASCADE CONSTRAINTS PURGE;
+DROP TABLE jobs         CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE regions     AS SELECT * FROM hr.regions;
+CREATE TABLE countries   AS SELECT * FROM hr.countries;
+CREATE TABLE locations   AS SELECT * FROM hr.locations;
+CREATE TABLE jobs        AS SELECT * FROM hr.jobs;
+CREATE TABLE departments AS SELECT * FROM hr.departments;
+CREATE TABLE employees   AS SELECT * FROM hr.employees;
+CREATE TABLE job_history AS SELECT * FROM hr.job_history;
+
+CREATE TABLE job_grades (
+    grade_level  VARCHAR2(3) PRIMARY KEY,
+    lowest_sal   NUMBER,
+    highest_sal  NUMBER
+);
+INSERT INTO job_grades VALUES ('A',  1000,  2999);
+INSERT INTO job_grades VALUES ('B',  3000,  5999);
+INSERT INTO job_grades VALUES ('C',  6000,  9999);
+INSERT INTO job_grades VALUES ('D', 10000, 14999);
+INSERT INTO job_grades VALUES ('E', 15000, 24999);
+INSERT INTO job_grades VALUES ('F', 25000, 40000);
+COMMIT;
+
+ALTER TABLE regions     ADD CONSTRAINT regions_pk      PRIMARY KEY (region_id);
+ALTER TABLE countries   ADD CONSTRAINT countries_pk    PRIMARY KEY (country_id);
+ALTER TABLE locations   ADD CONSTRAINT locations_pk    PRIMARY KEY (location_id);
+ALTER TABLE jobs        ADD CONSTRAINT jobs_pk         PRIMARY KEY (job_id);
+ALTER TABLE departments ADD CONSTRAINT departments_pk  PRIMARY KEY (department_id);
+ALTER TABLE employees   ADD CONSTRAINT employees_pk    PRIMARY KEY (employee_id);
+ALTER TABLE job_history ADD CONSTRAINT job_history_pk  PRIMARY KEY (employee_id, start_date);
+
+ALTER TABLE countries   ADD CONSTRAINT countries_regions_fk
+    FOREIGN KEY (region_id)     REFERENCES regions (region_id);
+ALTER TABLE locations   ADD CONSTRAINT locations_countries_fk
+    FOREIGN KEY (country_id)    REFERENCES countries (country_id);
+ALTER TABLE departments ADD CONSTRAINT dept_loc_fk
+    FOREIGN KEY (location_id)   REFERENCES locations (location_id);
+ALTER TABLE departments ADD CONSTRAINT dept_mgr_fk
+    FOREIGN KEY (manager_id)    REFERENCES employees (employee_id);
+ALTER TABLE employees   ADD CONSTRAINT emp_job_fk
+    FOREIGN KEY (job_id)        REFERENCES jobs (job_id);
+ALTER TABLE employees   ADD CONSTRAINT emp_dept_fk
+    FOREIGN KEY (department_id) REFERENCES departments (department_id);
+ALTER TABLE employees   ADD CONSTRAINT emp_manager_fk
+    FOREIGN KEY (manager_id)    REFERENCES employees (employee_id);
+ALTER TABLE job_history ADD CONSTRAINT jhist_emp_fk
+    FOREIGN KEY (employee_id)   REFERENCES employees (employee_id);
+ALTER TABLE job_history ADD CONSTRAINT jhist_job_fk
+    FOREIGN KEY (job_id)        REFERENCES jobs (job_id);
+ALTER TABLE job_history ADD CONSTRAINT jhist_dept_fk
+    FOREIGN KEY (department_id) REFERENCES departments (department_id);
+
+SELECT last_name || ' ' || salary AS wynagrodzenie
+FROM   employees
+WHERE  department_id IN (20, 50)
+AND    salary BETWEEN 2000 AND 7000
+ORDER  BY last_name;
+
+//odpowiedź:
+WYNAGRODZENIE                                                     
+------------------------------------------------------------------
+Atkinson 2800
+Bell 4000
+Bissot 3300
+Bull 4100
+Cabrio 3000
+Chung 3800
+Davies 3100
+Dellinger 3400
+Dilly 3600
+Everett 3900
+Fay 6000
+
+WYNAGRODZENIE                                                     
+------------------------------------------------------------------
+Feeney 3000
+Fleaur 3100
+Gates 2900
+Gee 2400
+Geoni 2800
+Grant 2600
+Jones 2800
+Ladwig 3600
+Landry 2400
+Mallin 3300
+Markle 2200
+
+WYNAGRODZENIE                                                     
+------------------------------------------------------------------
+Marlow 2500
+Matos 2600
+McCain 3200
+Mikkilineni 2700
+Mourgos 5800
+Nayer 3200
+OConnell 2600
+Olson 2100
+Patel 2500
+Perkins 2500
+Philtanker 2200
+
+WYNAGRODZENIE                                                     
+------------------------------------------------------------------
+Rajs 3500
+Rogers 2900
+Sarchand 4200
+Seo 2700
+Stiles 3200
+Sullivan 2500
+Taylor 3200
+Vargas 2500
+Vollman 6500
+Walsh 3100
+
+43 rows selected. 
+
+
+SELECT hire_date, last_name, &&kolumna
+FROM   employees
+WHERE  manager_id IS NOT NULL
+AND    EXTRACT(YEAR FROM hire_date) = 2005
+ORDER  BY &&kolumna;
+UNDEFINE kolumna
+
+// kolumna: JOB_ID
+//odpowiedź:
+old:SELECT hire_date, last_name, &&kolumna
+FROM   employees
+WHERE  manager_id IS NOT NULL
+AND    EXTRACT(YEAR FROM hire_date) = 2005
+ORDER  BY &&kolumna
+new:SELECT hire_date, last_name, JOB_ID
+FROM   employees
+WHERE  manager_id IS NOT NULL
+AND    EXTRACT(YEAR FROM hire_date) = 2005
+ORDER  BY JOB_ID
+
+HIRE_DAT LAST_NAME                 JOB_ID    
+-------- ------------------------- ----------
+05/09/21 Kochhar                   AD_VP     
+05/09/28 Chen                      FI_ACCOUNT
+05/09/30 Sciarra                   FI_ACCOUNT
+05/06/25 Austin                    IT_PROG   
+05/08/17 Fay                       MK_REP    
+05/12/24 Baida                     PU_CLERK  
+05/07/24 Tobias                    PU_CLERK  
+05/01/05 Partners                  SA_MAN    
+05/03/10 Errazuriz                 SA_MAN    
+05/03/10 Smith                     SA_REP    
+05/08/20 Hall                      SA_REP    
+
+HIRE_DAT LAST_NAME                 JOB_ID    
+-------- ------------------------- ----------
+05/03/24 Bernstein                 SA_REP    
+05/11/11 Vishney                   SA_REP    
+05/03/19 Hutton                    SA_REP    
+05/12/15 Doran                     SA_REP    
+05/03/11 Ozer                      SA_REP    
+05/01/30 Tucker                    SA_REP    
+05/03/03 Everett                   SH_CLERK  
+05/08/13 Dilly                     SH_CLERK  
+05/02/20 Bull                      SH_CLERK  
+05/06/14 Chung                     SH_CLERK  
+05/01/29 Davies                    ST_CLERK  
+
+HIRE_DAT LAST_NAME                 JOB_ID    
+-------- ------------------------- ----------
+05/10/26 Stiles                    ST_CLERK  
+05/02/16 Marlow                    ST_CLERK  
+05/08/20 Bissot                    ST_CLERK  
+05/10/30 Atkinson                  ST_CLERK  
+05/07/16 Nayer                     ST_CLERK  
+05/10/10 Vollman                   ST_MAN    
+05/04/10 Fripp                     ST_MAN    
+
+29 rows selected. 
+
+
+SELECT first_name || ' ' || last_name AS imie_nazwisko,
+       salary,
+       phone_number
+FROM   employees
+WHERE  SUBSTR(last_name, 3, 1) = 'e'
+AND    LOWER(first_name) LIKE '%' || LOWER('&czesc_imienia') || '%'
+ORDER  BY 1 DESC, 2 ASC;
+
+
+SELECT first_name,
+       last_name,
+       miesiace,
+       CASE
+           WHEN miesiace < 150              THEN salary * 0.10
+           WHEN miesiace BETWEEN 150 AND 200 THEN salary * 0.20
+           ELSE                                   salary * 0.30
+       END AS wysokosc_dodatku
+FROM  (SELECT first_name, last_name, salary,
+              ROUND(MONTHS_BETWEEN(SYSDATE, hire_date)) AS miesiace
+       FROM   employees)
+ORDER BY miesiace;
+
+
+SELECT e.last_name, d.department_id, d.department_name, e.job_id
+FROM   employees   e
+JOIN   departments d ON d.department_id = e.department_id
+JOIN   locations   l ON l.location_id    = d.location_id
+WHERE  l.city = 'Toronto';
+
+
+SELECT j.first_name || ' ' || j.last_name AS jennifer,
+       c.first_name || ' ' || c.last_name AS wspolpracownik
+FROM   employees j
+LEFT   JOIN employees c
+       ON  c.department_id = j.department_id
+       AND c.employee_id  <> j.employee_id
+WHERE  j.first_name = 'Jennifer'
+ORDER  BY jennifer, wspolpracownik;
+
+
+SELECT d.department_id, d.department_name
+FROM   departments d
+WHERE  NOT EXISTS (SELECT 1 FROM employees e
+                   WHERE  e.department_id = d.department_id);
+-- (równoważnie: LEFT JOIN employees ... WHERE e.employee_id IS NULL)
+
+
+SELECT e.first_name, e.last_name, e.job_id,
+       d.department_name, e.salary, g.grade_level
+FROM   employees   e
+LEFT   JOIN departments d ON d.department_id = e.department_id
+JOIN   job_grades  g ON e.salary BETWEEN g.lowest_sal AND g.highest_sal;
+
+
+SELECT first_name, last_name, salary
+FROM   employees
+WHERE  salary > (SELECT AVG(salary) FROM employees)
+ORDER  BY salary DESC;
+
+
+SELECT employee_id, first_name, last_name
+FROM   employees
+WHERE  department_id IN (SELECT department_id
+                         FROM   employees
+                         WHERE  LOWER(last_name) LIKE '%u%');
+
+
+SELECT employee_id, first_name, last_name, hire_date
+FROM   employees
+WHERE  SYSDATE - hire_date > (SELECT AVG(SYSDATE - hire_date) FROM employees)
+ORDER  BY hire_date;
+
+
+SELECT d.department_name,
+       COUNT(e.employee_id)      AS liczba_pracownikow,
+       ROUND(AVG(e.salary), 2)   AS srednia_pensja
+FROM   departments d
+LEFT   JOIN employees e ON e.department_id = d.department_id
+GROUP  BY d.department_name
+ORDER  BY liczba_pracownikow DESC;
+
+
+SELECT first_name, last_name, salary
+FROM   employees
+WHERE  salary < ANY (SELECT e.salary
+                     FROM   employees e
+                     JOIN   departments d ON d.department_id = e.department_id
+                     WHERE  d.department_name = 'IT');
+
+
+SELECT d.department_id, d.department_name
+FROM   departments d
+WHERE  EXISTS (SELECT 1
+               FROM   employees e
+               WHERE  e.department_id = d.department_id
+               AND    e.salary > (SELECT AVG(salary) FROM employees));
+
+
+SELECT j.job_title, ROUND(AVG(e.salary), 2) AS srednie_zarobki
+FROM   employees e
+JOIN   jobs      j ON j.job_id = e.job_id
+GROUP  BY j.job_title
+ORDER  BY srednie_zarobki DESC
+FETCH FIRST 5 ROWS ONLY;
+
+
+SELECT r.region_name,
+       COUNT(DISTINCT c.country_id) AS liczba_krajow,
+       COUNT(e.employee_id)         AS liczba_pracownikow
+FROM   regions r
+LEFT   JOIN countries   c ON c.region_id     = r.region_id
+LEFT   JOIN locations   l ON l.country_id    = c.country_id
+LEFT   JOIN departments d ON d.location_id   = l.location_id
+LEFT   JOIN employees   e ON e.department_id = d.department_id
+GROUP  BY r.region_name;
+
+
+SELECT e.first_name, e.last_name, e.salary AS zarobki_pracownika,
+       m.salary AS zarobki_menedzera
+FROM   employees e
+JOIN   employees m ON m.employee_id = e.manager_id
+WHERE  e.salary > m.salary;
+
+
+SELECT EXTRACT(MONTH FROM hire_date) AS miesiac,
+       COUNT(*)                      AS liczba_zatrudnionych
+FROM   employees
+GROUP  BY EXTRACT(MONTH FROM hire_date)
+ORDER  BY miesiac;
+
+
+SELECT d.department_name, ROUND(AVG(e.salary), 2) AS srednie_wynagrodzenie
+FROM   departments d
+JOIN   employees   e ON e.department_id = d.department_id
+GROUP  BY d.department_name
+ORDER  BY srednie_wynagrodzenie DESC
+FETCH FIRST 3 ROWS ONLY;
